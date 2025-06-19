@@ -74,7 +74,7 @@ This project is open-source and free to use under the [MIT License](LICENSE).
 
 ## 🎉 Credits
 
-Crafting tool lovingly built by **[Your Name]** for the *Legacy: Steel & Sorcery* community.
+Crafting tool lovingly built by **[SIllyGoose12]** for the *Legacy: Steel & Sorcery* community.
 
 ---
 
