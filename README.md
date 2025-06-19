@@ -40,13 +40,6 @@ A clean, lightweight, and fully browser-based crafting tracker built for **Legac
 
 ---
 
-## 📸 Screenshot
-
-![Screenshot](screenshot.png)  
-*(Add your own screenshot showing the app in action)*
-
----
-
 ## 🧠 How It Works
 
 - Recipes and inventory are stored **only in your browser**
