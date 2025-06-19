@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -75,6 +76,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+    }
+    .recipe-details {
+      flex-grow: 1;
+      padding-right: 10px;
     }
   </style>
 </head>
@@ -158,7 +164,15 @@
       list.innerHTML = "";
       recipes.forEach((recipe, index) => {
         const li = document.createElement("li");
-        li.innerHTML = `${recipe.name || 'Unnamed'} (x${recipe.qty || 0}) <button onclick="deleteRecipe(${index})">Delete</button>`;
+        const materialList = Object.entries(recipe.materials)
+          .map(([mat, amt]) => `${mat} x${amt}`)
+          .join(", ");
+        li.innerHTML = `
+          <div class="recipe-details">
+            <strong>${recipe.name}</strong> (x${recipe.qty}): ${materialList}
+          </div>
+          <button onclick="deleteRecipe(${index})">Delete</button>
+        `;
         list.appendChild(li);
       });
     }
