@@ -141,13 +141,16 @@
         if (mat && amt && !isNaN(amt)) materials[mat] = parseInt(amt, 10);
       });
 
-      recipes.push({ name, qty, materials });
+      const newRecipe = { name, qty, materials };
+      if (newRecipe.name && newRecipe.qty && Object.keys(newRecipe.materials).length > 0) {
+        recipes.push(newRecipe);
+        renderRecipeList();
+        calculateMissing();
+      }
+
       document.getElementById("recipeName").value = "";
       document.getElementById("recipeQty").value = "";
       document.getElementById("recipeMaterials").value = "";
-
-      renderRecipeList();
-      calculateMissing();
     }
 
     function renderRecipeList() {
@@ -155,7 +158,7 @@
       list.innerHTML = "";
       recipes.forEach((recipe, index) => {
         const li = document.createElement("li");
-        li.innerHTML = `${recipe.name} (x${recipe.qty}) <button onclick="deleteRecipe(${index})">Delete</button>`;
+        li.innerHTML = `${recipe.name || 'Unnamed'} (x${recipe.qty || 0}) <button onclick="deleteRecipe(${index})">Delete</button>`;
         list.appendChild(li);
       });
     }
