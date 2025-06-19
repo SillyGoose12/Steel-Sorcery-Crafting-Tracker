@@ -63,6 +63,19 @@
       margin: 10px auto;
       display: block;
     }
+    .recipe-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .recipe-list li {
+      margin-bottom: 5px;
+      background: var(--hl-color);
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -81,6 +94,11 @@
       <input type="number" id="recipeQty" placeholder="Quantity to Craft" />
       <textarea id="recipeMaterials" rows="4" placeholder="One material per line, format: Material Name,Qty per item\nExample:\nAsh,10\nPolished Stone,5"></textarea>
       <button onclick="addRecipe()">Add Recipe</button>
+    </div>
+
+    <div class="section">
+      <h2>Recipes</h2>
+      <ul class="recipe-list" id="recipeList"></ul>
     </div>
 
     <div class="section">
@@ -128,6 +146,23 @@
       document.getElementById("recipeQty").value = "";
       document.getElementById("recipeMaterials").value = "";
 
+      renderRecipeList();
+      calculateMissing();
+    }
+
+    function renderRecipeList() {
+      const list = document.getElementById("recipeList");
+      list.innerHTML = "";
+      recipes.forEach((recipe, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `${recipe.name} (x${recipe.qty}) <button onclick="deleteRecipe(${index})">Delete</button>`;
+        list.appendChild(li);
+      });
+    }
+
+    function deleteRecipe(index) {
+      recipes.splice(index, 1);
+      renderRecipeList();
       calculateMissing();
     }
 
@@ -186,6 +221,7 @@
         const data = JSON.parse(e.target.result);
         recipes = data.recipes || [];
         inventory = data.inventory || {};
+        renderRecipeList();
         calculateMissing();
       };
       reader.readAsText(file);
