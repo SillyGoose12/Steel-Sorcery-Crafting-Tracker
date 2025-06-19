@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crafting Tracker</title>
+  <style id="theme-style">
+    :root {
+      --bg-color: #1e1e1e;
+      --fg-color: #f0f0f0;
+      --btn-color: #333333;
+      --hl-color: #2d2d2d;
+      --border-color: #444;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--fg-color);
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    textarea, input, select, button {
+      background-color: var(--hl-color);
+      color: var(--fg-color);
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      width: 100%;
+    }
+    .section {
+      border: 1px solid var(--border-color);
+      padding: 15px;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: var(--btn-color);
+    }
+    .top-bar {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .search-input {
+      width: 300px;
+      margin: 10px auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Crafting Tracker</h1>
+  <div class="top-bar">
+    <button onclick="toggleTheme()">Switch Theme</button>
+    <button onclick="saveData()">Save Data</button>
+    <button onclick="loadData()">Load Data</button>
+    <input type="file" id="fileInput" style="display: none" onchange="loadFromFile(event)" />
+    <input class="search-input" type="text" id="searchBox" placeholder="Search Material..." onkeyup="calculateMissing()" />
+  </div>
+  <div class="container">
+    <div class="section">
+      <h2>Add Recipe</h2>
+      <input type="text" id="recipeName" placeholder="Recipe Name" />
+      <input type="number" id="recipeQty" placeholder="Quantity to Craft" />
+      <textarea id="recipeMaterials" rows="4" placeholder="One material per line, format: Material Name,Qty per item\nExample:\nAsh,10\nPolished Stone,5"></textarea>
+      <button onclick="addRecipe()">Add Recipe</button>
+    </div>
+
+    <div class="section">
+      <h2>Inventory</h2>
+      <textarea id="inventoryInput" rows="4" placeholder="One item per line, format: Material Name,Qty Owned\nExample:\nAsh,8\nPolished Stone,20"></textarea>
+      <button onclick="updateInventory()">Update Inventory</button>
+    </div>
+
+    <div class="section">
+      <h2>Missing Materials</h2>
+      <table id="missingTable">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Needed</th>
+            <th>Owned</th>
+            <th>Missing</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let recipes = [];
+    let inventory = {};
+    let isDarkTheme = true;
+
+    function addRecipe() {
+      const name = document.getElementById("recipeName").value.trim();
+      const qty = parseInt(document.getElementById("recipeQty").value.trim(), 10);
+      const materialsText = document.getElementById("recipeMaterials").value.trim();
+
+      if (!name || isNaN(qty) || !materialsText) return;
+
+      const materials = {};
+      materialsText.split("\n").forEach(line => {
+        const [mat, amt] = line.split(",").map(s => s.trim());
+        if (mat && amt && !isNaN(amt)) materials[mat] = parseInt(amt, 10);
+      });
+
+      recipes.push({ name, qty, materials });
+      document.getElementById("recipeName").value = "";
+      document.getElementById("recipeQty").value = "";
+      document.getElementById("recipeMaterials").value = "";
+
+      calculateMissing();
+    }
+
+    function updateInventory() {
+      inventory = {};
+      const lines = document.getElementById("inventoryInput").value.trim().split("\n");
+      lines.forEach(line => {
+        const [mat, qty] = line.split(",").map(s => s.trim());
+        if (mat && qty && !isNaN(qty)) inventory[mat] = parseInt(qty, 10);
+      });
+      calculateMissing();
+    }
+
+    function calculateMissing() {
+      const search = document.getElementById("searchBox").value.toLowerCase();
+      const totals = {};
+
+      recipes.forEach(r => {
+        Object.entries(r.materials).forEach(([mat, amt]) => {
+          totals[mat] = (totals[mat] || 0) + amt * r.qty;
+        });
+      });
+
+      const tbody = document.querySelector("#missingTable tbody");
+      tbody.innerHTML = "";
+
+      Object.entries(totals).forEach(([mat, needed]) => {
+        if (search && !mat.toLowerCase().includes(search)) return;
+        const owned = inventory[mat] || 0;
+        const missing = Math.max(0, needed - owned);
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${mat}</td><td>${needed}</td><td>${owned}</td><td>${missing}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function saveData() {
+      const blob = new Blob([
+        JSON.stringify({ recipes, inventory }, null, 2)
+      ], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "crafting_data.json";
+      link.click();
+    }
+
+    function loadData() {
+      document.getElementById("fileInput").click();
+    }
+
+    function loadFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const data = JSON.parse(e.target.result);
+        recipes = data.recipes || [];
+        inventory = data.inventory || {};
+        calculateMissing();
+      };
+      reader.readAsText(file);
+    }
+
+    function toggleTheme() {
+      isDarkTheme = !isDarkTheme;
+      const root = document.documentElement;
+      if (isDarkTheme) {
+        root.style.setProperty('--bg-color', '#1e1e1e');
+        root.style.setProperty('--fg-color', '#f0f0f0');
+        root.style.setProperty('--btn-color', '#333333');
+        root.style.setProperty('--hl-color', '#2d2d2d');
+        root.style.setProperty('--border-color', '#444');
+      } else {
+        root.style.setProperty('--bg-color', '#f0f0f0');
+        root.style.setProperty('--fg-color', '#1e1e1e');
+        root.style.setProperty('--btn-color', '#dddddd');
+        root.style.setProperty('--hl-color', '#ffffff');
+        root.style.setProperty('--border-color', '#ccc');
+      }
+    }
+  </script>
+</body>
+</html>
